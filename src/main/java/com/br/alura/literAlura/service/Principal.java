@@ -2,13 +2,15 @@ package com.br.alura.literAlura.service;
 
 
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
+import java.util.Comparator;
+import java.util.List;
 import com.br.alura.literAlura.model.ResultadoBusca;
 import com.br.alura.literAlura.repository.AutorRepository;
 import com.br.alura.literAlura.repository.LivroRepository;
@@ -68,6 +70,8 @@ public class Principal {
                     listarAutores();
                     break;
                 case 4:
+                    ListarAutoresEmDeterminadoAno();
+                case 5:
                     listarLivrosPorIdioma();
                     break;
                
@@ -79,6 +83,7 @@ public class Principal {
             }
         }
     }
+
 
    private void buscarLivroPorTitulo() {
     DadosLivro dados = obterDadosLivro();
@@ -136,19 +141,60 @@ public class Principal {
         return null;
     }
 }
+    
+   private void ListarAutoresEmDeterminadoAno() {
+    try{
+       System.out.println("""
+               
+            -----------------------------------------------------
+            Digite o ano e que o autor estava vivo:
+            -----------------------------------------------------
+            """);
+    Integer ano = leitura.nextInt();
+    List<Autor> autores = autorRepository.findAll();
+    autores.stream()
+            .filter(a -> a.getAnoNascimento() <= ano && a.getAnoFalecimento() >= ano)
+            .collect(Collectors.toList())
+            .forEach(System.out::println);
+        } catch(Exception e) {
+            System.out.println("Sinto muito! Não consegui encontrar no banco de dados");
+        }
+    }
 
     private void listarLivrosPorIdioma() {
-    
+    try{
+    System.out.println("""
+            -----------------------------------------------------
+            Digite o idioma do livro que deseja buscar:
+            -----------------------------------------------------
+            """);
+    String idioma = leitura.nextLine();
+    List<Livro> livros = livroRepository.findAll();
+    livros.stream()
+        .filter(l -> l.getIdioma().toLowerCase().contains(idioma.toLowerCase()))
+        .collect(Collectors.toList())
+        .forEach(System.out::println);
+        } catch(Exception e) {
+            System.out.println("Não há livros nesse idioma");
+        }
     }
 
 
     private void listarAutores() {
-
+    List<Autor> autores = autorRepository.findAll();
+    autores.stream()
+        .sorted(Comparator.comparing(Autor::getNome))
+        .collect(Collectors.toList())
+        .forEach(System.out::println);
     }
 
 
     private void listarLivrosRegistrados() {
-      
+    List<Livro> livros = livroRepository.findAll();
+    livros.stream()
+        .sorted(Comparator.comparing(Livro::getNumeroDownloads).reversed())
+        .collect(Collectors.toList())
+        .forEach(System.out::println);
     }
 
     

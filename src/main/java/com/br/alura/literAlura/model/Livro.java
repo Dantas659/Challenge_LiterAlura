@@ -68,7 +68,7 @@ public class Livro {
         return "Livro{" +
                 "id=" + id +
                 ", titulo='" + titulo + '\'' +
-                ", autor=" + autor +
+                ", autor=" + autor.getId() +
                 ", idioma='" + idioma + '\'' +
                 ", numeroDownloads=" + numeroDownloads +
                 '}';
