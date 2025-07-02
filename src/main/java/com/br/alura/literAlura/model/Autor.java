@@ -68,9 +68,22 @@ public class Autor {
         this.livrosAutor = livrosAutor;
     }
 
-    @Override
-    public String toString() {
-    return "Autor: " + this.nome + " Ano de nascimento: " + this.anoNascimento + " Ano de falecimento: "+ anoFalecimento + " Livros que escreveu: " + this.livrosAutor + ".";
-    }
+   @Override
+public String toString() {
+    return """
+            ----------------------------
+            Autor: """ + nome + """
+
+            Ano de Nascimento: """ + anoNascimento + """
+
+            Ano de Falecimento: """ + anoFalecimento + """
+
+            Livro(s) """ + livrosAutor + """
+
+            ----------------------------
+            """;
+}
+
+
 
 }

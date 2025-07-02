@@ -65,13 +65,22 @@ public class Livro {
 
     @Override
     public String toString() {
-        return "Livro{" +
-                "id=" + id +
-                ", titulo='" + titulo + '\'' +
-                ", autor=" + autor.getId() +
-                ", idioma='" + idioma + '\'' +
-                ", numeroDownloads=" + numeroDownloads +
-                '}';
-    }
+        return """ 
+        ----------------------------
+        Id: """ + id + """
 
+        Titulo: """  + titulo + """ 
+
+        Autor: """ + autor.getNome() + """
+
+        Idioma:  """  + idioma + """ 
+
+        Numero de Downloads: """  + numeroDownloads + """ 
+        
+        ---------------------------- 
+
+                
+                """;
+  
+    }
 }

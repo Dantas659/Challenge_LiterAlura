@@ -38,6 +38,7 @@ public class Principal {
 
         while (opcao != 0) {
             var menu = """
+
             -----------------------------------------------------
                     1 - Buscar livro pelo título
                     2 - Listar livros registrados
@@ -90,16 +91,13 @@ public class Principal {
     if (dados != null) {
         DadosAutor dadosAutor = dados.authors().get(0);
         System.out.println(dadosAutor);
-                Livro livro;
+        Livro livro;
         Autor autorExistente = autorRepository.findAll().stream()
                     .filter(a -> a.getNome().equalsIgnoreCase(dadosAutor.nome()))
                     .findFirst()
                     .orElse(null);
         if(autorExistente != null) {
             livro = new Livro(dados, autorExistente);
-            if(autorExistente != null) {
-                livro = new Livro(dados, autorExistente);
-            }
         } else {
             Autor novoAutor = new Autor(dadosAutor);
             livro = new Livro(dados, novoAutor);
@@ -153,9 +151,10 @@ public class Principal {
     Integer ano = leitura.nextInt();
     List<Autor> autores = autorRepository.findAll();
     autores.stream()
-            .filter(a -> a.getAnoNascimento() <= ano && a.getAnoFalecimento() >= ano)
+            .filter(a -> a.getAnoNascimento() <= ano)
+            .filter(a -> a.getAnoFalecimento() >= ano)
             .collect(Collectors.toList())
-            .forEach(System.out::println);
+            .forEach(a -> System.out.println(a.toString()));
         } catch(Exception e) {
             System.out.println("Sinto muito! Não consegui encontrar no banco de dados");
         }
