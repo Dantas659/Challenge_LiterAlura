@@ -2,15 +2,13 @@ package com.br.alura.literAlura.service;
 
 
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import java.util.Comparator;
-import java.util.List;
+import java.util.InputMismatchException;
 import com.br.alura.literAlura.model.ResultadoBusca;
 import com.br.alura.literAlura.repository.AutorRepository;
 import com.br.alura.literAlura.repository.LivroRepository;
@@ -19,183 +17,158 @@ import com.br.alura.literAlura.model.Livro;
 import com.br.alura.literAlura.model.Autor;
 import com.br.alura.literAlura.model.DadosAutor;
 
-
 @Service
 public class Principal {
-    private Scanner leitura = new Scanner(System.in);
-    private ConsumoApi consumoApi = new ConsumoApi();
-    private ConverteDados converteDados = new ConverteDados();
-    private String json;
+
+    private final Scanner leitura = new Scanner(System.in);
+    private final ConsumoApi consumoApi = new ConsumoApi();
+    private final ConverteDados converteDados = new ConverteDados();
     private final String ENDPOINT = "https://gutendex.com/books/";
+
     @Autowired
     private AutorRepository autorRepository;
+
     @Autowired
     private LivroRepository livroRepository;
 
     public void exibeMenu() {
         System.out.println("Bem-vindo ao LiterAlura!");
-        var opcao = -1; 
+        int opcao = -1;
 
         while (opcao != 0) {
-            var menu = """
+            System.out.println("""
+                -----------------------------------------------------
+                        1 - Buscar livro pelo título
+                        2 - Listar livros registrados
+                        3 - Listar autores
+                        4 - Listar autores em determinado ano
+                        5 - Listar livros em determinado idioma
 
-            -----------------------------------------------------
-                    1 - Buscar livro pelo título
-                    2 - Listar livros registrados
-                    3 - Listar autores
-                    4 - Listar autores em determinado ano
-                    5 - Listar livros em determinado idioma
+                        0 - Sair    
+                -----------------------------------------------------""");
 
-                    0 - Sair    
-            -----------------------------------------------------                             
-                    """;
-
-            System.out.println(menu);
             try {
-            opcao = leitura.nextInt();
-            leitura.nextLine();
-            } catch (NumberFormatException e) {
-                System.out.println("Entrada inválida!");
-                return;
+                opcao = leitura.nextInt();
+                leitura.nextLine(); 
+            } catch (InputMismatchException e) {
+                System.out.println("Entrada inválida! Digite um número.");
+                leitura.nextLine(); 
+                continue;
             }
-            
 
             switch (opcao) {
-                case 1:
-                    buscarLivroPorTitulo();
-                    break;
-                case 2:
-                    listarLivrosRegistrados();
-                    break;
-                case 3:
-                    listarAutores();
-                    break;
-                case 4:
-                    ListarAutoresEmDeterminadoAno();
-                case 5:
-                    listarLivrosPorIdioma();
-                    break;
-               
-                case 0:
-                    System.out.println("Saindo...");
-                    break;
-                default: 
-                    System.out.println("Opção inválida");
+                case 1 -> buscarLivroPorTitulo();
+                case 2 -> listarLivrosRegistrados();
+                case 3 -> listarAutores();
+                case 4 -> listarAutoresEmDeterminadoAno();
+                case 5 -> listarLivrosPorIdioma();
+                case 0 -> System.out.println("Saindo...");
+                default -> System.out.println("Opção inválida.");
             }
         }
     }
 
+    private void buscarLivroPorTitulo() {
+        DadosLivro dados = obterDadosLivro();
+        if (dados != null) {
+            DadosAutor dadosAutor = dados.authors().get(0);
+            System.out.println(dadosAutor);
 
-   private void buscarLivroPorTitulo() {
-    DadosLivro dados = obterDadosLivro();
-    if (dados != null) {
-        DadosAutor dadosAutor = dados.authors().get(0);
-        System.out.println(dadosAutor);
-        Livro livro;
-        Autor autorExistente = autorRepository.findAll().stream()
+            Livro livro;
+            Autor autorExistente = autorRepository.findAll().stream()
                     .filter(a -> a.getNome().equalsIgnoreCase(dadosAutor.nome()))
                     .findFirst()
                     .orElse(null);
-        if(autorExistente != null) {
-            livro = new Livro(dados, autorExistente);
-        } else {
-            Autor novoAutor = new Autor(dadosAutor);
-            livro = new Livro(dados, novoAutor);
-            autorRepository.save(novoAutor);
-        }
-        try {
-            livroRepository.save(livro);
-            System.out.println(livro);
-        } catch (Exception e) {
-            System.out.println("""
-            ----------------------------------------------
-                O livro já consta no banco de dados!
-            ----------------------------------------------
-                """);
+
+            if (autorExistente != null) {
+                livro = new Livro(dados, autorExistente);
+            } else {
+                Autor novoAutor = new Autor(dadosAutor);
+                autorRepository.save(novoAutor);
+                livro = new Livro(dados, novoAutor);
+            }
+
+            try {
+                livroRepository.save(livro);
+                System.out.println(livro);
+            } catch (Exception e) {
+                System.out.println("""
+                    ----------------------------------------------
+                        O livro já consta no banco de dados!
+                    ----------------------------------------------""");
+            }
         }
     }
-
-
-}
-
 
     private DadosLivro obterDadosLivro() {
-    System.out.print("""
+        System.out.println("""
             -----------------------------------------------------
             Digite o título do livro que deseja buscar:
-            -----------------------------------------------------
-            """);
-    String titulo = leitura.nextLine().toLowerCase().trim();
-    String url = ENDPOINT + "?search=" + titulo.replace(" ", "+");
-    json = consumoApi.obterDados(url);
-    var dadosLivro = converteDados.obterDadosJson(json, ResultadoBusca.class);
-    Optional<DadosLivro> dados = dadosLivro.results().stream()
-            .filter(l -> l.titulo().toLowerCase().contains(titulo))
-            .findFirst();
-    if (dados.isPresent()) {
-        return dados.get();
-    } else {
-        System.out.println("Livro não encontrado.");
-        return null;
+            -----------------------------------------------------""");
+
+        String titulo = leitura.nextLine().toLowerCase().trim();
+        String url = ENDPOINT + "?search=" + titulo.replace(" ", "+");
+
+        String json = consumoApi.obterDados(url);
+        ResultadoBusca resultado = converteDados.obterDadosJson(json, ResultadoBusca.class);
+
+        return resultado.results().stream()
+                .filter(l -> l.titulo().toLowerCase().contains(titulo))
+                .findFirst()
+                .orElseGet(() -> {
+                    System.out.println("Livro não encontrado.");
+                    return null;
+                });
     }
-}
-    
-   private void ListarAutoresEmDeterminadoAno() {
-    try{
-       System.out.println("""
-               
-            -----------------------------------------------------
-            Digite o ano e que o autor estava vivo:
-            -----------------------------------------------------
-            """);
-    Integer ano = leitura.nextInt();
-    List<Autor> autores = autorRepository.findAll();
-    autores.stream()
-            .filter(a -> a.getAnoNascimento() <= ano)
-            .filter(a -> a.getAnoFalecimento() >= ano)
-            .collect(Collectors.toList())
-            .forEach(a -> System.out.println(a.toString()));
-        } catch(Exception e) {
-            System.out.println("Sinto muito! Não consegui encontrar no banco de dados");
+
+    private void listarAutoresEmDeterminadoAno() {
+        try {
+            System.out.println("""
+                -----------------------------------------------------
+                Digite o ano em que o autor estava vivo:
+                -----------------------------------------------------""");
+
+            int ano = leitura.nextInt();
+
+            autorRepository.findAll().stream()
+                    .filter(a -> a.getAnoNascimento() <= ano && a.getAnoFalecimento() >= ano)
+                    .forEach(a -> System.out.println(a.toString()));
+
+        } catch (InputMismatchException e) {
+            System.out.println("Ano inválido.");
+            leitura.nextLine(); // limpa buffer
+        } catch (Exception e) {
+            System.out.println("Sinto muito! Não consegui encontrar no banco de dados.");
         }
     }
 
     private void listarLivrosPorIdioma() {
-    try{
-    System.out.println("""
-            -----------------------------------------------------
-            Digite o idioma do livro que deseja buscar:
-            -----------------------------------------------------
-            """);
-    String idioma = leitura.nextLine();
-    List<Livro> livros = livroRepository.findAll();
-    livros.stream()
-        .filter(l -> l.getIdioma().toLowerCase().contains(idioma.toLowerCase()))
-        .collect(Collectors.toList())
-        .forEach(System.out::println);
-        } catch(Exception e) {
-            System.out.println("Não há livros nesse idioma");
+        try {
+            System.out.println("""
+                -----------------------------------------------------
+                Digite o idioma do livro que deseja buscar:
+                -----------------------------------------------------""");
+
+            String idioma = leitura.nextLine();
+
+            livroRepository.findAll().stream()
+                    .filter(l -> l.getIdioma().toLowerCase().contains(idioma.toLowerCase()))
+                    .forEach(System.out::println);
+
+        } catch (Exception e) {
+            System.out.println("Não há livros nesse idioma.");
         }
     }
 
-
     private void listarAutores() {
-    List<Autor> autores = autorRepository.findAll();
-    autores.stream()
-        .sorted(Comparator.comparing(Autor::getNome))
-        .collect(Collectors.toList())
-        .forEach(System.out::println);
+        autorRepository.findAll().stream()
+                .sorted(Comparator.comparing(Autor::getNome))
+                .forEach(System.out::println);
     }
-
 
     private void listarLivrosRegistrados() {
-    List<Livro> livros = livroRepository.findAll();
-    livros.stream()
-        .sorted(Comparator.comparing(Livro::getNumeroDownloads).reversed())
-        .collect(Collectors.toList())
-        .forEach(System.out::println);
+        livroRepository.findAll().stream()
+                .sorted(Comparator.comparing(Livro::getNumeroDownloads).reversed())
+                .forEach(System.out::println);
     }
-
-    
 }
-
