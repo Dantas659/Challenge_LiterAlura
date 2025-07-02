@@ -12,7 +12,7 @@ public record DadosAutor(
    @Override
 public String toString() {
     return String.format("""
-            -----------LIVRO------------
+            ----------------------------
             Autor: %s
             Ano de Nascimento: %d
             Ano de Falecimento: %d
