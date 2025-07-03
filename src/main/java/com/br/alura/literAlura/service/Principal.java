@@ -74,14 +74,19 @@ public class Principal {
             DadosAutor dadosAutor = dados.authors().get(0);
             System.out.println(dadosAutor);
 
-            Livro livro;
+            Livro livro = (Livro) livroRepository.findAll().stream()
+                    .filter(l -> l.getTitulo().equalsIgnoreCase(dados.titulo()))
+                    .findFirst()
+                    .orElse(null);
             Autor autorExistente = autorRepository.findAll().stream()
                     .filter(a -> a.getNome().equalsIgnoreCase(dadosAutor.nome()))
                     .findFirst()
                     .orElse(null);
 
-            if (autorExistente != null) {
+            if (autorExistente != null && livro == null ) {
                 livro = new Livro(dados, autorExistente);
+            } if(autorExistente != null && livro != null) {
+                System.out.println(dadosAutor);
             } else {
                 Autor novoAutor = new Autor(dadosAutor);
                 autorRepository.save(novoAutor);
@@ -136,7 +141,7 @@ public class Principal {
 
         } catch (InputMismatchException e) {
             System.out.println("Ano inválido.");
-            leitura.nextLine(); // limpa buffer
+            leitura.nextLine();
         } catch (Exception e) {
             System.out.println("Sinto muito! Não consegui encontrar no banco de dados.");
         }
@@ -147,12 +152,18 @@ public class Principal {
             System.out.println("""
                 -----------------------------------------------------
                 Digite o idioma do livro que deseja buscar:
+
+                pt - português
+                en - inglês
+                fr - francês
+                es - espanhol
+
                 -----------------------------------------------------""");
 
             String idioma = leitura.nextLine();
 
             livroRepository.findAll().stream()
-                    .filter(l -> l.getIdioma().toLowerCase().contains(idioma.toLowerCase()))
+                    .filter(l -> l.getIdioma().equalsIgnoreCase(idioma))
                     .forEach(System.out::println);
 
         } catch (Exception e) {

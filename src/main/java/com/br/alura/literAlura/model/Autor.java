@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "autores")
-public class Autor {
+public class Autor{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
